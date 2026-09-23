@@ -757,7 +757,15 @@
         var shimUrl = await buildShimWorkerUrl();
         return Tesseract.createWorker("jpn", 1, {
           workerPath: shimUrl,
-          corePath: absUrl("vendor"),
+          // Pointing corePath at the exact non-SIMD core file (rather than
+          // the vendor/ directory) skips tesseract.js's own runtime
+          // WebAssembly-SIMD feature probe and always loads the plain LSTM
+          // core. Some iPhone Safari versions report SIMD/relaxed-SIMD
+          // support via that probe but then fail to actually compile the
+          // SIMD-enabled core ("WebAssembly.Module doesn't parse..."),
+          // which aborts recognition. The plain core is slightly slower
+          // but works everywhere, and accuracy is unaffected.
+          corePath: absUrl("vendor/tesseract-core-lstm.wasm.js"),
           langPath: "embedded",
           gzip: false,
           logger: onLog
@@ -1012,4 +1020,3 @@
 </script>
 </body>
 </html>
-
