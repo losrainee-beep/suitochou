@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>出納帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+  :root{
+    --bg:#f4f6f4;
+    --surface:#ffffff;
+    --surface-raised:#ffffff;
+    --ink:#12201b;
+    --ink-2:#54615a;
+    --ink-3:#8a938c;
+    --border:rgba(18,32,27,0.11);
+    --accent:#4169e1;
+    --accent-ink:#ffffff;
+    --accent-soft:#e6ebfc;
+    --danger:#c23f3f;
+    --danger-soft:#f9e6e6;
+    --warn:#a8690a;
+    --warn-soft:#fbeed9;
+    --shadow: 0 1px 2px rgba(18,32,27,0.06), 0 6px 20px -8px rgba(18,32,27,0.18);
+    padding-top:env(safe-area-inset-top, 0px);
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1210;
+      --surface:#161d1a;
+      --surface-raised:#1c2420;
+      --ink:#f2f5f3;
+      --ink-2:#b6c0ba;
+      --ink-3:#7c877f;
+      --border:rgba(255,255,255,0.11);
+      --accent:#7893f0;
+      --accent-ink:#0b1230;
+      --accent-soft:rgba(120,147,240,0.16);
+      --danger:#e2726f;
+      --danger-soft:rgba(226,114,111,0.14);
+      --warn:#e0a63f;
+      --warn-soft:rgba(224,166,63,0.14);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 6px 24px -8px rgba(0,0,0,0.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1210;
+    --surface:#161d1a;
+    --surface-raised:#1c2420;
+    --ink:#f2f5f3;
+    --ink-2:#b6c0ba;
+    --ink-3:#7c877f;
+    --border:rgba(255,255,255,0.11);
+    --accent:#7893f0;
+    --accent-ink:#0b1230;
+    --accent-soft:rgba(120,147,240,0.16);
+    --danger:#e2726f;
+    --danger-soft:rgba(226,114,111,0.14);
+    --warn:#e0a63f;
+    --warn-soft:rgba(224,166,63,0.14);
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 6px 24px -8px rgba(0,0,0,0.5);
+    color-scheme: dark;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  img{ max-width:100%; }
+  [hidden]{ display:none !important; }
+  .mono{ font-family:"JetBrains Mono","Zen Kaku Gothic New",monospace; font-variant-numeric:tabular-nums; }
+  button{ font-family:inherit; }
+  input,select,button{ font-size:16px; }
+  h1,h2,h3{ text-wrap:balance; margin:0; }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+
+  #app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    background:var(--bg);
+    position:relative;
+  }
+
+  .topbar{
+    padding:16px 18px 8px;
+    background:var(--bg);
+  }
+  .brand-mark{ font-size:20px; font-weight:900; letter-spacing:-0.01em; color:var(--accent); }
+  .client-name{ font-size:13px; color:var(--ink-2); margin-top:2px; }
+
+  main{
+    flex:1;
+    padding:2px 18px 48px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:18px;
+  }
+
+  .pending-banner{
+    padding:11px 13px;
+    border-radius:12px;
+    background:var(--warn-soft);
+    color:var(--warn);
+    font-size:12.5px;
+    line-height:1.6;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .pending-banner button{
+    align-self:flex-start;
+    background:none;
+    border:1px solid currentColor;
+    border-radius:8px;
+    padding:5px 11px;
+    font-size:12px;
+    font-weight:700;
+    color:inherit;
+    cursor:pointer;
+  }
+
+  /* Hero / capture actions */
+  .hero{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; padding:14px 6px 4px; }
+  .hero h2{ font-size:19px; font-weight:700; }
+  .hero p{ font-size:13px; color:var(--ink-2); line-height:1.7; margin:0; max-width:34ch; }
+
+  .hero-actions{ display:flex; flex-direction:column; gap:10px; }
+  .btn{
+    border-radius:13px;
+    padding:14px 18px;
+    font-weight:700;
+    font-size:15px;
+    border:1px solid transparent;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .btn-primary{ background:var(--accent); color:var(--accent-ink); }
+  .btn-primary:active{ opacity:0.85; }
+  .btn-secondary{ background:var(--surface); color:var(--ink); border-color:var(--border); }
+  .btn-secondary:active{ background:var(--accent-soft); }
+  .btn-ghost{
+    background:none; border:1px dashed var(--border); color:var(--accent);
+    border-radius:12px; padding:11px; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .btn-danger{ background:var(--danger-soft); color:var(--danger); border-color:transparent; }
+
+  .scan-preview{ display:flex; flex-direction:column; gap:12px; }
+  .scan-preview img{
+    width:100%;
+    max-height:52vh;
+    object-fit:contain;
+    border-radius:14px;
+    border:1px solid var(--border);
+    background:var(--surface);
+  }
+  .scan-preview .row{ display:flex; gap:10px; }
+  .scan-preview .row .btn{ flex:1; }
+
+  .scan-progress{ display:flex; flex-direction:column; gap:14px; align-items:center; padding:24px 8px; text-align:center; }
+  .progress-track{ width:100%; height:8px; border-radius:5px; background:var(--border); overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--accent); border-radius:5px; width:4%; transition:width 0.25s ease; }
+  .scan-progress p{ font-size:13.5px; color:var(--ink-2); margin:0; }
+  .scan-progress .hint{ font-size:12px; color:var(--ink-3); }
+
+  /* History (view-only, on-device) */
+  .section-title{ font-size:13px; font-weight:700; color:var(--ink-2); letter-spacing:0.02em; }
+  .empty-note{ color:var(--ink-3); font-size:13.5px; text-align:center; padding:18px 8px; line-height:1.7; }
+  .history-list{ display:flex; flex-direction:column; }
+  .history-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 4px; border-bottom:1px solid var(--border); }
+  .history-row:last-child{ border-bottom:none; }
+  .history-main{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .history-store{ font-size:14.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .history-date{ font-size:12px; color:var(--ink-3); }
+  .history-side{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
+  .history-total{ font-size:14.5px; font-weight:700; }
+  .badge{ font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px; white-space:nowrap; }
+  .badge-sent{ background:var(--accent-soft); color:var(--accent); }
+  .badge-pending{ background:var(--warn-soft); color:var(--warn); }
+
+  /* Fields */
+  .field{ display:flex; flex-direction:column; gap:5px; flex:1; }
+  .field span{ font-size:12px; font-weight:700; color:var(--ink-2); }
+  .field-row{ display:flex; gap:10px; }
+  .input{
+    border:1px solid var(--border);
+    background:var(--bg);
+    color:var(--ink);
+    border-radius:10px;
+    padding:10px 11px;
+    width:100%;
+  }
+  .input:focus{ background:var(--surface); }
+
+  /* Modal */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:40;
+    background:rgba(10,15,12,0.42);
+    display:flex; align-items:flex-end;
+    padding-top:calc(env(safe-area-inset-top, 0px) + 30px);
+  }
+  .modal-sheet{
+    width:100%;
+    max-width:480px;
+    margin:0 auto;
+    background:var(--surface);
+    border-radius:20px 20px 0 0;
+    max-height:92vh;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 -8px 30px rgba(0,0,0,0.25);
+  }
+  .modal-header{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px 8px; }
+  .modal-header h2{ font-size:16.5px; font-weight:700; }
+  .icon-btn{
+    width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--border); background:var(--bg); color:var(--ink-2);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    flex-shrink:0;
+  }
+  .modal-body{ padding:8px 18px 4px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
+  .receipt-preview-note{ font-size:11.5px; color:var(--ink-3); text-align:center; margin-top:-8px; }
+  .receipt-preview{ width:100%; max-height:34vh; object-fit:contain; border-radius:12px; border:1px solid var(--border); background:var(--bg); }
+  .items-editor{ display:flex; flex-direction:column; }
+  .item-row{ display:flex; flex-direction:column; gap:7px; padding:11px 0; border-bottom:1px solid var(--border); }
+  .item-row .row2{ display:flex; gap:8px; align-items:center; }
+  .item-row .item-price{ width:92px; flex-shrink:0; }
+  .item-row .item-cat{ flex:1; min-width:0; }
+  .item-row .item-del{ flex-shrink:0; }
+  select.input{
+    -webkit-appearance:none; appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2354615a' stroke-width='2.2' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 9px center;
+    padding-right:30px;
+  }
+  .totals-box{ display:flex; flex-direction:column; gap:4px; padding:10px 12px; background:var(--bg); border-radius:10px; }
+  .totals-line{ display:flex; justify-content:space-between; font-size:13.5px; }
+  .totals-line.muted{ color:var(--ink-3); font-size:12.5px; }
+  .totals-line.warn{ color:var(--warn); font-weight:700; }
+  .modal-footer{ display:flex; gap:10px; padding:14px 18px calc(16px + env(safe-area-inset-bottom, 0px)); border-top:1px solid var(--border); }
+  .modal-footer .btn{ flex:1; }
+
+  /* Toast */
+  .toast{
+    position:fixed; left:50%; bottom:28px; transform:translate(-50%, 8px);
+    background:var(--ink); color:var(--bg);
+    padding:10px 18px; border-radius:24px; font-size:13.5px; font-weight:500;
+    opacity:0; pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease;
+    z-index:60; white-space:nowrap;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .toast{ background:#eef1ef; color:#12201b; } }
+  :root[data-theme="dark"] .toast{ background:#eef1ef; color:#12201b; }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  /* Configuration error (bad / missing link) */
+  .config-error{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px; padding:70px 30px; min-height:80vh; }
+  .config-error h2{ font-size:17px; }
+  .config-error p{ font-size:13.5px; color:var(--ink-2); line-height:1.8; max-width:32ch; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="configError" class="config-error" hidden>
+    <h2>このリンクは使用できません</h2>
+    <p>お手数ですが、担当の税理士・会計事務所にご確認のうえ、もう一度リンクを送ってもらってください。</p>
+  </div>
+
+  <div id="mainWrap" hidden>
+    <div class="topbar">
+      <div class="brand-mark">出納帳</div>
+      <div id="clientNameLabel" class="client-name" hidden></div>
+    </div>
+
+    <main>
+      <div id="pendingBanner" class="pending-banner" hidden>
+        <span id="pendingBannerText"></span>
+        <button type="button" id="pendingRetryBtn">今すぐ再送信</button>
+      </div>
+
+      <section id="captureArea">
+        <div id="scanButtons">
+          <div class="hero">
+            <h2>領収書を撮影してください</h2>
+            <p>撮影すると内容を自動で読み取り、送信します。むずかしい操作は必要ありません。</p>
+          </div>
+          <div class="hero-actions">
+            <button type="button" class="btn btn-primary" id="btnCamera">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h1.2a1 1 0 0 0 .9-.55L8.7 4.1A2 2 0 0 1 10.5 3h3a2 2 0 0 1 1.8 1.1l.6 1.35a1 1 0 0 0 .9.55H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.4"/></svg>
+              カメラで撮影する
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnGallery">写真を選ぶ</button>
+            <button type="button" class="btn-ghost" id="btnManual">＋ 写真なしで手入力</button>
+          </div>
+        </div>
+
+        <div id="scanPreviewArea" class="scan-preview" hidden>
+          <img id="scanPreviewImg" alt="選択した領収書">
+          <div class="row">
+            <button type="button" class="btn btn-secondary" id="btnRetake">撮り直す</button>
+            <button type="button" class="btn btn-primary" id="btnAnalyze">この内容を送信する</button>
+          </div>
+        </div>
+
+        <div id="scanProgressArea" class="scan-progress" hidden>
+          <div class="progress-track"><div class="progress-fill" id="scanProgressBar"></div></div>
+          <p id="scanProgressText">準備しています…</p>
+          <p class="hint">初回は読み取りエンジンの準備に少し時間がかかります</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title" style="margin-bottom:8px;">これまでの送信記録</div>
+        <div id="historyWrap" class="card" style="padding:2px 18px;">
+          <div id="historyList" class="history-list"></div>
+          <p id="historyEmpty" class="empty-note" hidden>まだ記録がありません。上の「カメラで撮影する」から始めてください。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<input type="file" accept="image/*" capture="environment" id="cameraInput" hidden>
+<input type="file" accept="image/*" id="galleryInput" hidden>
+
+<div id="formModal" class="modal-overlay" hidden>
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h2 id="formTitle">内容を確認</h2>
+      <button type="button" class="icon-btn" id="formClose" aria-label="閉じる">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <img id="formPreviewImg" class="receipt-preview" hidden alt="領収書の写真">
+      <p id="formPreviewNote" class="receipt-preview-note" hidden>写真はこの端末での読み取りにのみ使用され、送信も保存もされません</p>
+      <div class="field-row">
+        <label class="field">
+          <span>お店の名前</span>
+          <input type="text" id="formStore" class="input" placeholder="例：セブンイレブン">
+        </label>
+        <label class="field" style="max-width:150px;">
+          <span>日付</span>
+          <input type="date" id="formDate" class="input">
+        </label>
+      </div>
+      <div>
+        <div class="section-title" style="margin-bottom:2px;">品目</div>
+        <div id="formItems" class="items-editor"></div>
+      </div>
+      <button type="button" class="btn-ghost" id="formAddItem">＋ 品目を追加</button>
+      <div id="formTotals" class="totals-box"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" id="formSave">この内容を送信する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/7.0.0/tesseract.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- accounting categories (勘定科目) & keyword dictionary ----------
+     Same standard 個人事業主向け青色申告決算書の経費科目 used in the
+     accountant-facing 出納帳 app, so entries line up with what the
+     accountant later imports into accounting software. */
+  var CATEGORIES = [
+    { label:"租税公課",    color:"#8d6e63" },
+    { label:"荷造運賃",    color:"#a1887f" },
+    { label:"水道光熱費",  color:"#00838f" },
+    { label:"旅費交通費",  color:"#2a78d6" },
+    { label:"通信費",      color:"#3f51b5" },
+    { label:"広告宣伝費",  color:"#ad1457" },
+    { label:"接待交際費",  color:"#e87ba4" },
+    { label:"損害保険料",  color:"#5c6bc0" },
+    { label:"修繕費",      color:"#ff7043" },
+    { label:"消耗品費",    color:"#1baf7a" },
+    { label:"減価償却費",  color:"#607d8b" },
+    { label:"福利厚生費",  color:"#26a69a" },
+    { label:"給料賃金",    color:"#c98500" },
+    { label:"外注工賃",    color:"#6d4c41" },
+    { label:"利子割引料",  color:"#9575cd" },
+    { label:"地代家賃",    color:"#008300" },
+    { label:"貸倒金",      color:"#e34948" },
+    { label:"会議費",      color:"#4a3aa7" },
+    { label:"雑費",        color:"#767a76" }
+  ];
+
+  var KEYWORDS = {
+    "租税公課": ["印紙","収入印紙","印紙税","自動車税","固定資産税","登録免許税","不動産取得税","事業税","組合費","商工会","会費"],
+    "荷造運賃": ["宅配便","宅急便","ゆうパック","配送料","送料","運賃","梱包","段ボール","ガムテープ","郵送","レターパック"],
+    "水道光熱費": ["電気","ガス","水道","電気代","ガス代","水道代","電力"],
+    "旅費交通費": ["電車","地下鉄","バス","タクシー","ガソリン","給油","駐車場","パーキング","ETC","切符","定期","新幹線","飛行機","航空券","Suica","PASMO","ICOCA","高速道路","レンタカー","出張","宿泊","ホテル"],
+    "通信費": ["携帯","スマホ","ケータイ","インターネット","プロバイダ","Wi-Fi","通信料","電話","切手","はがき"],
+    "広告宣伝費": ["広告","チラシ","名刺","販促","宣伝","看板","ホームページ","Web広告","折込","ポスター","DM"],
+    "接待交際費": ["接待","贈答","ご祝儀","お香典","お中元","お歳暮","懇親会","飲み会","歓送迎会","手土産"],
+    "損害保険料": ["火災保険","自動車保険","賠償保険","損害保険","共済","地震保険"],
+    "修繕費": ["修理","修繕","メンテナンス","部品交換","点検","故障"],
+    "消耗品費": ["文房具","ペン","ノート","コピー用紙","インク","トナー","電池","乾電池","事務用品","雑貨","備品","封筒","ファイル","カートリッジ","工具"],
+    "福利厚生費": ["健康診断","慰安旅行","忘年会","新年会","社員食堂","お茶菓子"],
+    "給料賃金": ["給与","給料","賃金","アルバイト代","時給"],
+    "外注工賃": ["外注","業務委託","委託費","制作費","デザイン料"],
+    "利子割引料": ["利息","借入金利子","手形割引料"],
+    "地代家賃": ["家賃","地代","賃料","月極駐車場","事務所家賃"],
+    "会議費": ["会議","打ち合わせ","ミーティング","カフェ","喫茶","コーヒー","お茶代","会場費"]
+  };
+
+  function suggestCategory(name){
+    var n = (name||"");
+    for(var i=0;i<CATEGORIES.length;i++){
+      var cat = CATEGORIES[i].label;
+      var kws = KEYWORDS[cat];
+      if(!kws) continue;
+      for(var j=0;j<kws.length;j++){
+        if(n.indexOf(kws[j]) !== -1) return cat;
+      }
+    }
+    return "雑費";
+  }
+
+  /* ---------- utils ---------- */
+  function $(id){ return document.getElementById(id); }
+  function show(el){ if(el) el.hidden = false; }
+  function hide(el){ if(el) el.hidden = true; }
+  function escapeHtml(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
+    });
+  }
+  function todayISO(){
+    var d = new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function formatYen(n){
+    var v = Number(n||0);
+    return "¥"+v.toLocaleString("ja-JP");
+  }
+  function formatDateLabel(dateStr){
+    var d = new Date(dateStr+"T00:00:00");
+    var w = ["日","月","火","水","木","金","土"][d.getDay()];
+    return (d.getMonth()+1)+"月"+d.getDate()+"日("+w+")";
+  }
+  function genId(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "id-"+Date.now()+"-"+Math.random().toString(16).slice(2);
+  }
+
+  /* ---------- client link configuration ----------
+     The published page is shared by every client of the accountant; which
+     Google Form (and therefore which spreadsheet) a given visit submits to
+     is entirely determined by a short config blob in the URL (?c=...),
+     produced by the separate link-generator.html tool. No Claude account,
+     no Google account, and no sign-in of any kind is required to use this
+     page — it is a plain static site. */
+  function decodeConfig(str){
+    var b64 = str.replace(/-/g,"+").replace(/_/g,"/");
+    while(b64.length % 4) b64 += "=";
+    var json = decodeURIComponent(escape(atob(b64)));
+    var obj = JSON.parse(json);
+    if(!obj || typeof obj !== "object") throw new Error("bad config");
+    if(!obj.f || !obj.e || !obj.e.d || !obj.e.s || !obj.e.i || !obj.e.a || !obj.e.c){
+      throw new Error("incomplete config");
+    }
+    return obj;
+  }
+
+  var config = null;
+  function loadConfig(){
+    try{
+      var params = new URLSearchParams(location.search);
+      var c = params.get("c");
+      if(!c) return null;
+      return decodeConfig(c);
+    }catch(e){ return null; }
+  }
+
+  /* ---------- Google Forms relay ----------
+     Submits one form response per line item (so each row in the
+     accountant's spreadsheet is one amount + one 勘定科目, ready for
+     accounting-software import). fetch(..., {mode:"no-cors"}) is the
+     standard technique for posting to a Google Form's formResponse
+     endpoint from outside script.google.com — the response body is
+     opaque, but the promise resolving is a reasonable signal the request
+     reached the network; a rejected promise means it did not (offline,
+     DNS failure, etc.) and is queued for retry. */
+  function formResponseUrl(formId){
+    return "https://docs.google.com/forms/d/e/" + encodeURIComponent(formId) + "/formResponse";
+  }
+  async function submitItemToForm(item){
+    var body = new URLSearchParams();
+    body.set(config.e.d, item.date);
+    body.set(config.e.s, item.store);
+    body.set(config.e.i, item.name);
+    body.set(config.e.a, String(item.price));
+    body.set(config.e.c, item.category);
+    await fetch(formResponseUrl(config.f), {
+      method: "POST",
+      mode: "no-cors",
+      body: body
+    });
+  }
+
+  /* ---------- on-device send history (view-only, per browser) ---------- */
+  var LS_KEY = null; // set once config is known, namespaced per accountant/form
+  function lsLoadAll(){
+    try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }catch(e){ return []; }
+  }
+  function lsSaveAll(list){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(list)); }catch(e){}
+  }
+
+  function pendingCount(list){
+    var n = 0;
+    list.forEach(function(r){ (r.items||[]).forEach(function(it){ if(it.status !== "sent") n++; }); });
+    return n;
+  }
+
+  var sendQueueBusy = false;
+  async function processQueue(){
+    if(sendQueueBusy) return;
+    sendQueueBusy = true;
+    try{
+      var list = lsLoadAll();
+      var changed = false;
+      for(var i=0;i<list.length;i++){
+        var r = list[i];
+        for(var j=0;j<(r.items||[]).length;j++){
+          var it = r.items[j];
+          if(it.status === "sent") continue;
+          try{
+            await submitItemToForm({ date:r.date, store:r.store, name:it.name, price:it.price, category:it.category });
+            it.status = "sent";
+            changed = true;
+          }catch(err){
+            // stays pending; will retry on next trigger (app open, back online, manual retry)
+          }
+          await new Promise(function(res){ setTimeout(res, 250); });
+        }
+      }
+      if(changed) lsSaveAll(list);
+      renderHistory();
+    } finally {
+      sendQueueBusy = false;
+    }
+  }
+
+  function renderPendingBanner(){
+    var list = lsLoadAll();
+    var n = pendingCount(list);
+    if(n <= 0){ hide(els.pendingBanner); return; }
+    els.pendingBannerText.textContent = "送信できていない記録が"+n+"件あります。電波の良い場所でこの画面を開くと自動的に再送信されます。";
+    show(els.pendingBanner);
+  }
+
+  function renderHistory(){
+    var list = lsLoadAll().slice().sort(function(a,b){ return b.createdAt.localeCompare(a.createdAt); }).slice(0, 40);
+    els.historyList.innerHTML = list.map(function(r){
+      var allSent = (r.items||[]).every(function(it){ return it.status === "sent"; });
+      var badge = allSent
+        ? '<span class="badge badge-sent">送信済み</span>'
+        : '<span class="badge badge-pending">送信中</span>';
+      return '<div class="history-row">'
+        +'<div class="history-main">'
+          +'<span class="history-store">'+escapeHtml(r.store||"(店名なし)")+'</span>'
+          +'<span class="history-date">'+formatDateLabel(r.date)+'</span>'
+        +'</div>'
+        +'<div class="history-side">'
+          +'<span class="history-total mono">'+formatYen(r.total)+'</span>'
+          + badge
+        +'</div>'
+      +'</div>';
+    }).join("");
+    if(list.length){ hide(els.historyEmpty); } else { show(els.historyEmpty); }
+    renderPendingBanner();
+  }
+
+  /* ---------- receipt OCR parsing (regex fallback; no AI-assisted parsing
+     outside Claude, so this carries the full load here) ---------- */
+  function toNumber(s){
+    return parseInt(String(s).replace(/[¥￥,\s]/g,""), 10);
+  }
+  function parseReceiptText(text){
+    // Receipts and OCR output often use full-width digits/symbols (０-９、
+    // ￥ variants). NFKC normalization folds these to standard half-width
+    // ASCII so the price/date regexes below actually match them.
+    text = String(text).normalize("NFKC");
+    var rawLines = text.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var skipPattern = /^(小計|軽減税率|内消費税|外税|税抜|税込|預り|お預り|預かり|お釣り|おつり|point|ポイント|現金|カード|クレジット|電子マネー|お会計|点数|レジ|担当|領収|ありがとう|会員|℡|tel|www\.|http)/i;
+    var totalPattern = /^(合計|ご利用金額|お買上げ合計|total)/i;
+    var priceRe = /([¥￥]?\s*[0-9][0-9,]{1,6})\s*(?:円)?\s*$/;
+
+    var storeGuess = rawLines[0] || "";
+    var totalGuess = null;
+    var items = [];
+
+    for(var i=0;i<rawLines.length;i++){
+      var line = rawLines[i];
+      if(totalPattern.test(line)){
+        var tm = line.match(priceRe);
+        if(tm) totalGuess = toNumber(tm[1]);
+        continue;
+      }
+      if(skipPattern.test(line)) continue;
+      var m = line.match(priceRe);
+      if(!m) continue;
+      var price = toNumber(m[1]);
+      if(!price || price < 1 || price > 100000) continue;
+      var name = line.slice(0, m.index).trim();
+      name = name.replace(/[×xX]\s*\d+\s*$/, "").trim();
+      name = name.replace(/^[\*\-・:：]+/, "").trim();
+      if(!name) continue;
+      if(/^[0-9\-\s]+$/.test(name)) continue;
+      if(name.length > 30) name = name.slice(0,30);
+      items.push({ name:name, price:price });
+    }
+
+    var dateGuess = todayISO();
+    var dm = text.match(/(20\d{2})[\/年.\-](\d{1,2})[\/月.\-](\d{1,2})/);
+    if(dm){
+      var y=+dm[1], mo=+dm[2], da=+dm[3];
+      if(mo>=1 && mo<=12 && da>=1 && da<=31){
+        dateGuess = y+"-"+String(mo).padStart(2,"0")+"-"+String(da).padStart(2,"0");
+      }
+    }
+
+    return { storeGuess: storeGuess.slice(0,30), dateGuess: dateGuess, totalGuess: totalGuess, items: items };
+  }
+
+  /* ---------- image capture & preprocessing ---------- */
+  function loadImageFromFile(file){
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      img.onload = function(){ resolve(img); };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  async function fileToProcessedCanvas(file){
+    var img = await loadImageFromFile(file);
+    var maxDim = 1600;
+    var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    var scale = Math.min(1, maxDim / Math.max(w,h));
+    w = Math.round(w*scale); h = Math.round(h*scale);
+    var canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+    try{
+      var imgData = ctx.getImageData(0,0,w,h);
+      var d = imgData.data;
+      var contrast = 1.3;
+      for(var i=0;i<d.length;i+=4){
+        var gray = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+        var v = (gray-128)*contrast + 128;
+        v = v<0?0:(v>255?255:v);
+        d[i]=d[i+1]=d[i+2]=v;
+      }
+      ctx.putImageData(imgData,0,0);
+    }catch(e){ /* CORS or other canvas issue: continue with unprocessed image */ }
+    return canvas;
+  }
+
+  /* ---------- OCR engine (self-hosted assets) ---------- */
+  var STATUS_MAP = {
+    "loading tesseract core": "読み取りエンジンを準備中…",
+    "initializing tesseract": "初期化しています…",
+    "loading language traineddata": "日本語データを読み込み中…",
+    "initializing api": "まもなく開始します…",
+    "recognizing text": "文字を認識しています…"
+  };
+  function statusLabel(status){
+    return STATUS_MAP[(status||"").toLowerCase()] || "処理しています…";
+  }
+
+  var workerPromise = null;
+  var shimUrlPromise = null;
+  var langBlobUrlPromise = null;
+  function absUrl(rel){
+    // Tesseract.js's worker runs inside a blob: URL context, where relative
+    // paths cannot resolve (self.location is the opaque blob URL). Resolving
+    // to an absolute URL here, against the page's own location, is required.
+    return new URL(rel, location.href).toString();
+  }
+
+  // The Japanese language model is a binary .traineddata file, bundled as
+  // base64 text inside a ~3MB JSON file. This is fetched and decoded here,
+  // on the MAIN thread, rather than inside the worker: on some iPhone
+  // Safari versions, fetching a several-MB same-origin resource from
+  // *inside* a Web Worker unreliably throws "NetworkError: Load failed"
+  // even on a good connection, while the identical fetch from the page's
+  // own main thread succeeds. Fetching it here and handing the worker a
+  // local blob: URL (an in-memory read, not a network request) avoids
+  // relying on worker-context fetch for the large transfer at all.
+  async function fetchLangDataBytes(){
+    var url = absUrl("lang/jpn-traineddata.b64.json");
+    var lastErr;
+    for(var attempt = 1; attempt <= 3; attempt++){
+      try{
+        var res = await fetch(url);
+        if(!res.ok) throw new Error("HTTP " + res.status + " fetching language data");
+        var j = await res.json();
+        var bin = atob(j.b64);
+        var bytes = new Uint8Array(bin.length);
+        for(var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+        return bytes;
+      }catch(e){
+        lastErr = e;
+        if(attempt < 3) await sleep(900 * attempt);
+      }
+    }
+    throw lastErr;
+  }
+  function getLangDataBlobUrl(){
+    if(!langBlobUrlPromise){
+      langBlobUrlPromise = fetchLangDataBytes().then(function(bytes){
+        var blob = new Blob([bytes], { type: "application/octet-stream" });
+        return URL.createObjectURL(blob);
+      });
+    }
+    return langBlobUrlPromise;
+  }
+
+  // Small worker-side shim: intercepts the worker's own fetch of the
+  // ".traineddata" URL and serves it from the already-downloaded local
+  // blob: URL instead (see fetchLangDataBytes above for why). This keeps
+  // Tesseract on its normal, working "langs as string" code path (passing
+  // decoded bytes directly to createWorker hits a tesseract.js v7 bug).
+  function buildShimWorkerUrl(langBlobUrl){
+    if(!shimUrlPromise){
+      var realWorkerUrl = absUrl("vendor/worker.min.js");
+      var shimSrc = [
+        "var __origFetch = self.fetch.bind(self);",
+        "var __langBlobUrl = " + JSON.stringify(langBlobUrl) + ";",
+        "self.fetch = function(url, opts){",
+        "  var u = String(url);",
+        "  if(u.indexOf('jpn.traineddata') !== -1){",
+        "    return __origFetch(__langBlobUrl);",
+        "  }",
+        "  return __origFetch(url, opts);",
+        "};",
+        "importScripts(" + JSON.stringify(realWorkerUrl) + ");"
+      ].join("\n");
+      var blob = new Blob([shimSrc], { type: "application/javascript" });
+      shimUrlPromise = Promise.resolve(URL.createObjectURL(blob));
+    }
+    return shimUrlPromise;
+  }
+
+  async function getWorker(onLog){
+    if(!workerPromise){
+      workerPromise = (async function(){
+        var langBlobUrl = await getLangDataBlobUrl();
+        var shimUrl = await buildShimWorkerUrl(langBlobUrl);
+        return Tesseract.createWorker("jpn", 1, {
+          workerPath: shimUrl,
+          // Pointing corePath at the exact non-SIMD core file (rather than
+          // the vendor/ directory) skips tesseract.js's own runtime
+          // WebAssembly-SIMD feature probe and always loads the plain LSTM
+          // core. Some iPhone Safari versions report SIMD/relaxed-SIMD
+          // support via that probe but then fail to actually compile the
+          // SIMD-enabled core ("WebAssembly.Module doesn't parse..."),
+          // which aborts recognition. The plain core is slightly slower
+          // but works everywhere, and accuracy is unaffected.
+          corePath: absUrl("vendor/tesseract-core-lstm.wasm.js"),
+          langPath: "embedded",
+          gzip: false,
+          logger: onLog
+        });
+      })();
+    }
+    return workerPromise;
+  }
+  async function runOCR(canvas, onLog){
+    var worker = await getWorker(onLog);
+    var result = await worker.recognize(canvas);
+    return result.data.text;
+  }
+
+  /* ---------- state ---------- */
+  var els = {};
+  var formState = null;
+  var scanFile = null;
+
+  function cacheEls(){
+    ["configError","mainWrap","clientNameLabel","pendingBanner","pendingBannerText","pendingRetryBtn",
+     "scanButtons","btnCamera","btnGallery","btnManual","scanPreviewArea","scanPreviewImg","btnRetake","btnAnalyze",
+     "scanProgressArea","scanProgressBar","scanProgressText",
+     "historyList","historyEmpty",
+     "cameraInput","galleryInput",
+     "formModal","formTitle","formClose","formPreviewImg","formPreviewNote","formStore","formDate","formItems","formAddItem","formTotals","formSave",
+     "toast"
+    ].forEach(function(id){ els[id] = $(id); });
+  }
+
+  function toast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ els.toast.classList.remove("show"); }, 2400);
+  }
+
+  // TEMPORARY diagnostic-only panel (see confirmAnalyze's catch block).
+  // Plain DOM element, not alert()/confirm() — those don't display at all
+  // when this page is running as an iOS home-screen app.
+  function showDebugDetail(text){
+    var box = document.getElementById("__debugBox");
+    if(!box){
+      box = document.createElement("div");
+      box.id = "__debugBox";
+      box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:9999;"+
+        "background:#c23f3f;color:#fff;padding:16px 14px 20px;font-size:13px;"+
+        "line-height:1.6;white-space:pre-wrap;word-break:break-word;"+
+        "font-family:ui-monospace,monospace;max-height:70vh;overflow:auto;"+
+        "box-shadow:0 4px 16px rgba(0,0,0,0.3);user-select:text;-webkit-user-select:text;";
+      var closeBtn = document.createElement("button");
+      closeBtn.textContent = "閉じる(スクリーンショットを撮ってから)";
+      closeBtn.style.cssText = "display:block;margin-top:12px;padding:8px 14px;"+
+        "background:#fff;color:#c23f3f;border:none;border-radius:8px;font-weight:700;"+
+        "font-family:system-ui,sans-serif;font-size:13px;";
+      closeBtn.addEventListener("click", function(){ box.remove(); });
+      var label = document.createElement("div");
+      label.textContent = "【エラー詳細(サポート用/一時的な表示です)】";
+      label.style.cssText = "font-weight:700;margin-bottom:8px;font-family:system-ui,sans-serif;";
+      box.appendChild(label);
+      var msgEl = document.createElement("div");
+      msgEl.id = "__debugBoxMsg";
+      box.appendChild(msgEl);
+      box.appendChild(closeBtn);
+      document.body.appendChild(box);
+    }
+    document.getElementById("__debugBoxMsg").textContent = text;
+  }
+
+  /* ---------- scan flow ---------- */
+  function resetScanView(){
+    show(els.scanButtons); hide(els.scanPreviewArea); hide(els.scanProgressArea);
+  }
+
+  function handleImageChosen(file){
+    scanFile = file;
+    els.scanPreviewImg.src = URL.createObjectURL(file);
+    hide(els.scanButtons); show(els.scanPreviewArea); hide(els.scanProgressArea);
+  }
+
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  async function analyzeOnce(previewUrl){
+    var canvas = await fileToProcessedCanvas(scanFile);
+    var text = await runOCR(canvas, function(log){
+      if(log && log.status && typeof log.progress === "number"){
+        els.scanProgressText.textContent = statusLabel(log.status);
+        els.scanProgressBar.style.width = Math.max(4, Math.round(log.progress*100)) + "%";
+      }
+    });
+
+    var basic = parseReceiptText(text);
+    var items = basic.items.map(function(it){ return { name:it.name, price:it.price, category: suggestCategory(it.name) }; });
+
+    resetScanView();
+    openReceiptForm({
+      store: basic.storeGuess,
+      date: basic.dateGuess,
+      items: items,
+      ocrTotal: basic.totalGuess,
+      imageUrl: previewUrl
+    });
+    if(!items.length){
+      toast("品目をうまく読み取れませんでした。手動で追加してください。");
+    }
+  }
+
+  async function confirmAnalyze(){
+    if(!scanFile) return;
+    hide(els.scanPreviewArea); show(els.scanProgressArea);
+    els.scanProgressBar.style.width = "4%";
+    els.scanProgressText.textContent = "画像を準備しています…";
+    var previewUrl = els.scanPreviewImg.src;
+    try{
+      await analyzeOnce(previewUrl);
+    }catch(err1){
+      // A first failure is very often just a flaky mobile connection
+      // dropping mid-download of the (several-MB, first-run-only) OCR
+      // engine assets. Rather than making the person notice the failure
+      // and tap "もう一度" themselves, retry automatically once before
+      // giving up, so a one-off network blip is invisible to them.
+      console.error("OCR attempt 1 failed, retrying once:", err1);
+      show(els.scanProgressArea); hide(els.scanPreviewArea);
+      els.scanProgressBar.style.width = "4%";
+      els.scanProgressText.textContent = "通信が不安定なようです。もう一度試しています…";
+      await sleep(1200);
+      try{
+        await analyzeOnce(previewUrl);
+      }catch(err2){
+        console.error(err2);
+        resetScanView();
+        // TEMPORARY diagnostic detail (remove once the iOS failure is
+        // resolved): alert()/confirm() are silently no-ops when this page
+        // is opened as an iOS "Add to Home Screen" app (no browser chrome
+        // to host them), so the detail is shown in an on-page panel
+        // instead, which works in every display mode.
+        var detail = err2 && (err2.message || err2.name || String(err2)) || "(詳細不明)";
+        toast("読み取りに失敗しました。もう一度お試しください。");
+        showDebugDetail(detail);
+      }
+    }
+  }
+
+  /* ---------- confirmation form (always for a NEW receipt; past
+     submissions in the history list are view-only, since a Google Form
+     can only add rows, not edit or delete them after the fact) ---------- */
+  function rowHtml(it, idx){
+    return '<div class="item-row" data-idx="'+idx+'">'
+      +'<input type="text" class="input item-name" value="'+escapeHtml(it.name)+'" placeholder="品目名" aria-label="品目名 '+(idx+1)+'">'
+      +'<div class="row2">'
+        +'<input type="number" inputmode="numeric" class="input item-price" value="'+(it.price||"")+'" placeholder="金額" aria-label="金額 '+(idx+1)+'">'
+        +'<select class="input item-cat" aria-label="勘定科目 '+(idx+1)+'">'
+          + CATEGORIES.map(function(c){ return '<option value="'+escapeHtml(c.label)+'"'+(c.label===it.category?" selected":"")+'>'+escapeHtml(c.label)+'</option>'; }).join("")
+        +'</select>'
+        +'<button type="button" class="icon-btn item-del" aria-label="この品目を削除">'
+          +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>'
+        +'</button>'
+      +'</div>'
+    +'</div>';
+  }
+
+  function renderFormItems(){
+    els.formItems.innerHTML = formState.items.map(rowHtml).join("");
+  }
+
+  function updateFormTotals(){
+    var sum = formState.items.reduce(function(s,it){ return s + (Number(it.price)||0); }, 0);
+    var html = '<div class="totals-line"><span>品目合計</span><span class="mono">'+formatYen(sum)+'</span></div>';
+    if(formState.ocrTotal != null){
+      html += '<div class="totals-line muted"><span>レシート記載の合計</span><span class="mono">'+formatYen(formState.ocrTotal)+'</span></div>';
+      var diff = sum - formState.ocrTotal;
+      if(Math.abs(diff) >= 1){
+        html += '<div class="totals-line warn"><span>差額</span><span class="mono">'+(diff>0?"+":"")+formatYen(diff)+'</span></div>';
+      }
+    }
+    els.formTotals.innerHTML = html;
+  }
+
+  function openReceiptForm(opts){
+    formState = {
+      items: (opts.items && opts.items.length ? opts.items : [{name:"",price:"",category:"雑費"}]).map(function(it){ return Object.assign({}, it); }),
+      store: opts.store || "",
+      date: opts.date || todayISO(),
+      ocrTotal: (typeof opts.ocrTotal === "number") ? opts.ocrTotal : null
+    };
+    els.formStore.value = formState.store;
+    els.formDate.value = formState.date;
+    if(opts.imageUrl){
+      els.formPreviewImg.src = opts.imageUrl; show(els.formPreviewImg); show(els.formPreviewNote);
+    } else {
+      hide(els.formPreviewImg); hide(els.formPreviewNote);
+    }
+    renderFormItems();
+    updateFormTotals();
+    show(els.formModal);
+  }
+
+  function closeForm(){ hide(els.formModal); formState = null; }
+
+  async function sendForm(){
+    if(!formState) return;
+    formState.store = els.formStore.value.trim();
+    formState.date = els.formDate.value || todayISO();
+    var items = formState.items
+      .map(function(it){ return { name:(it.name||"").trim(), price:Number(it.price)||0, category: it.category || "雑費" }; })
+      .filter(function(it){ return it.name && it.price>0; });
+    if(!items.length){
+      toast("品目名と金額を1つ以上入力してください");
+      return;
+    }
+    var total = items.reduce(function(s,it){ return s+it.price; }, 0);
+    var record = {
+      id: genId(),
+      store: formState.store || "(店名なし)",
+      date: formState.date,
+      items: items.map(function(it){ return Object.assign({ status:"pending" }, it); }),
+      total: total,
+      createdAt: new Date().toISOString()
+    };
+    els.formSave.disabled = true;
+    try{
+      var list = lsLoadAll();
+      list.push(record);
+      lsSaveAll(list);
+      closeForm();
+      renderHistory();
+      toast("送信しました");
+      processQueue();
+    } finally {
+      els.formSave.disabled = false;
+    }
+  }
+
+  /* ---------- wiring ---------- */
+  function wireEvents(){
+    els.btnCamera.addEventListener("click", function(){ els.cameraInput.click(); });
+    els.btnGallery.addEventListener("click", function(){ els.galleryInput.click(); });
+    els.btnManual.addEventListener("click", function(){
+      openReceiptForm({ store:"", date: todayISO(), items:[{name:"",price:"",category:"雑費"}], ocrTotal:null });
+    });
+    els.cameraInput.addEventListener("change", function(e){
+      var f = e.target.files && e.target.files[0];
+      if(f) handleImageChosen(f);
+      e.target.value = "";
+    });
+    els.galleryInput.addEventListener("change", function(e){
+      var f = e.target.files && e.target.files[0];
+      if(f) handleImageChosen(f);
+      e.target.value = "";
+    });
+    els.btnRetake.addEventListener("click", resetScanView);
+    els.btnAnalyze.addEventListener("click", confirmAnalyze);
+
+    els.formClose.addEventListener("click", closeForm);
+    els.formModal.addEventListener("click", function(e){ if(e.target === els.formModal) closeForm(); });
+    els.formAddItem.addEventListener("click", function(){
+      formState.items.push({ name:"", price:"", category:"雑費" });
+      renderFormItems();
+      updateFormTotals();
+    });
+    els.formItems.addEventListener("input", function(e){
+      var row = e.target.closest(".item-row");
+      if(!row) return;
+      var idx = +row.dataset.idx;
+      if(e.target.classList.contains("item-name")) formState.items[idx].name = e.target.value;
+      if(e.target.classList.contains("item-price")) formState.items[idx].price = e.target.value;
+      if(e.target.classList.contains("item-cat")) formState.items[idx].category = e.target.value;
+      updateFormTotals();
+    });
+    els.formItems.addEventListener("click", function(e){
+      var delBtn = e.target.closest(".item-del");
+      if(!delBtn) return;
+      var row = e.target.closest(".item-row");
+      var idx = +row.dataset.idx;
+      formState.items.splice(idx,1);
+      if(!formState.items.length) formState.items.push({name:"",price:"",category:"雑費"});
+      renderFormItems();
+      updateFormTotals();
+    });
+    els.formSave.addEventListener("click", sendForm);
+
+    els.pendingRetryBtn.addEventListener("click", function(){ processQueue(); });
+    window.addEventListener("online", function(){ processQueue(); });
+  }
+
+  /* ---------- init ---------- */
+  function init(){
+    cacheEls();
+    config = loadConfig();
+    if(!config){
+      show(els.configError);
+      return;
+    }
+    LS_KEY = "suitocho-client.sent." + config.f;
+    if(config.n){
+      els.clientNameLabel.textContent = config.n + " 様";
+      show(els.clientNameLabel);
+    }
+    wireEvents();
+    show(els.mainWrap);
+    renderHistory();
+    processQueue();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
